@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,73 +7,67 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const _ = require('lodash')
+const _ = require("lodash");
 
-const EagerLoad = require('../EagerLoad')
-const RelationsParser = require('../Relations/Parser')
-const CE = require('../../Exceptions')
+const EagerLoad = require("../EagerLoad");
+const RelationsParser = require("../Relations/Parser");
+const CE = require("../../Exceptions");
 
-const proxyGet = require('../../../lib/proxyGet')
-const util = require('../../../lib/util')
-const { ioc } = require('../../../lib/iocResolver')
+const proxyGet = require("../../../lib/proxyGet");
+const util = require("../../../lib/util");
+const { ioc } = require("../../../lib/iocResolver");
 
 const proxyHandler = {
-  get: proxyGet('query', false, function (target, name) {
-    const queryScope = util.makeScopeName(name)
+  get: proxyGet("query", false, function(target, name) {
+    const queryScope = util.makeScopeName(name);
 
-    if (name === 'then') {
-      throw new Error(`Make sure to call fetch to execute the query`)
+    if (name === "then") {
+      throw new Error(`Make sure to call fetch to execute the query`);
     }
 
     /**
      * if value is a local query scope and a function, please
      * execute it
      */
-    if (typeof (target.Model[queryScope]) === 'function') {
-      return function (...args) {
-        target.Model[queryScope](this, ...args)
-        return this
-      }
+    if (typeof target.Model[queryScope] === "function") {
+      return function(...args) {
+        target.Model[queryScope](this, ...args);
+        return this;
+      };
     }
   })
-}
+};
 
 /**
  * Aggregrates to be added to the query
  * builder
  */
 const aggregates = [
-  'sum',
-  'sumDistinct',
-  'avg',
-  'avgDistinct',
-  'min',
-  'max',
-  'count',
-  'countDistinct',
-  'getSum',
-  'getSumDistinct',
-  'getAvg',
-  'getAvgDistinct',
-  'getMin',
-  'getMax',
-  'getCount',
-  'getCountDistinct'
-]
+  "sum",
+  "sumDistinct",
+  "avg",
+  "avgDistinct",
+  "min",
+  "max",
+  "count",
+  "countDistinct",
+  "getSum",
+  "getSumDistinct",
+  "getAvg",
+  "getAvgDistinct",
+  "getMin",
+  "getMax",
+  "getCount",
+  "getCountDistinct"
+];
 
 /**
  * Query methods to be added to the
  * query builder
  */
-const queryMethods = [
-  'pluck',
-  'toSQL',
-  'increment',
-  'decrement',
-  'toString'
-]
+const queryMethods = ["pluck", "toSQL", "increment", "decrement", "toString"];
 
 /**
  * Query builder for the lucid models extended
@@ -83,57 +77,57 @@ const queryMethods = [
  * @constructor
  */
 class QueryBuilder {
-  constructor (Model, connection) {
-    this.Model = Model
-    this.connectionString = connection
+  constructor(Model, connection) {
+    this.Model = Model;
+    this.connectionString = connection;
 
-    const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
+    const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table;
 
     /**
      * Reference to database provider
      */
-    this.db = ioc.use('Adonis/Src/Database').connection(connection)
+    this.db = ioc.use("Adonis/Src/Database").connection(connection);
 
     /**
      * Reference to query builder with pre selected table
      */
-    this.query = this.db.table(table)
+    this.query = this.db.table(table);
 
     /**
      * SubQuery to be pulled off the query builder. For now this is
      * passed to the `where` closure.
      */
     this.query.subQuery = () => {
-      return this.Model.queryWithOutScopes()
-    }
+      return this.Model.queryWithOutScopes();
+    };
 
     /**
      * Relations to be eagerloaded
      *
      * @type {Object}
      */
-    this._eagerLoads = {}
+    this._eagerLoads = {};
 
     /**
      * The sideloaded data for this query
      *
      * @type {Array}
      */
-    this._sideLoaded = []
+    this._sideLoaded = [];
 
     /**
      * Query level visible fields
      *
      * @type {Array}
      */
-    this._visibleFields = this.Model.visible
+    this._visibleFields = this.Model.visible;
 
     /**
      * Query level hidden fields
      *
      * @type {Array}
      */
-    this._hiddenFields = this.Model.hidden
+    this._hiddenFields = this.Model.hidden;
 
     /**
      * Storing the counter for how many withCount queries
@@ -144,15 +138,15 @@ class QueryBuilder {
      *
      * @type {Number}
      */
-    this._withCountCounter = -1
+    this._withCountCounter = -1;
 
     /**
      * Reference to the global scopes iterator. A fresh instance
      * needs to be used for each query
      */
-    this.scopesIterator = this.Model.$globalScopes.iterator()
+    this.scopesIterator = this.Model.$globalScopes.iterator();
 
-    return new Proxy(this, proxyHandler)
+    return new Proxy(this, proxyHandler);
   }
 
   /**
@@ -173,19 +167,19 @@ class QueryBuilder {
    *
    * @private
    */
-  _has (relationInstance, method, expression, value, rawWhere, callback) {
-    if (typeof (callback) === 'function') {
-      callback(relationInstance)
+  _has(relationInstance, method, expression, value, rawWhere, callback) {
+    if (typeof callback === "function") {
+      callback(relationInstance);
     }
 
     if (expression && value) {
-      const countSql = relationInstance.relatedWhere(true).toSQL()
-      this.query[rawWhere](`(${countSql.sql}) ${expression} ?`, countSql.bindings.concat([value]))
+      const countSql = relationInstance.relatedWhere(true).toSQL();
+      this.query[rawWhere](`(${countSql.sql}) ${expression} ?`, countSql.bindings.concat([value]));
     } else {
-      this.query[method](relationInstance.relatedWhere())
+      this.query[method](relationInstance.relatedWhere());
     }
 
-    relationInstance.applyRelatedScopes()
+    relationInstance.applyRelatedScopes();
   }
 
   /**
@@ -201,11 +195,11 @@ class QueryBuilder {
    *
    * @private
    */
-  _parseRelation (relation) {
-    const { name, nested } = RelationsParser.parseRelation(relation)
-    RelationsParser.validateRelationExistence(this.Model.prototype, name)
-    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name)
-    return { relationInstance, nested, name }
+  _parseRelation(relation) {
+    const { name, nested } = RelationsParser.parseRelation(relation);
+    RelationsParser.validateRelationExistence(this.Model.prototype, name);
+    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name);
+    return { relationInstance, nested, name };
   }
 
   /**
@@ -216,9 +210,9 @@ class QueryBuilder {
    *
    * @private
    */
-  _applyScopes () {
-    this.scopesIterator.execute(this)
-    return this
+  _applyScopes() {
+    this.scopesIterator.execute(this);
+    return this;
   }
 
   /**
@@ -232,8 +226,8 @@ class QueryBuilder {
    *
    * @private
    */
-  _mapRowsToInstances (rows) {
-    return rows.map((row) => this._mapRowToInstance(row))
+  _mapRowsToInstances(rows) {
+    return rows.map(row => this._mapRowToInstance(row));
   }
 
   /**
@@ -245,25 +239,27 @@ class QueryBuilder {
    *
    * @return {Model}
    */
-  _mapRowToInstance (row) {
-    const modelInstance = new this.Model()
+  _mapRowToInstance(row) {
+    const modelInstance = new this.Model();
 
     /**
      * The omitBy function is used to remove sideLoaded data
      * from the actual values and set them as $sideLoaded
      * property on models
      */
-    modelInstance.newUp(_.omitBy(row, (value, field) => {
-      if (this._sideLoaded.indexOf(field) > -1) {
-        modelInstance.$sideLoaded[field] = value
-        return true
-      }
+    modelInstance.newUp(
+      _.omitBy(row, (value, field) => {
+        if (this._sideLoaded.indexOf(field) > -1) {
+          modelInstance.$sideLoaded[field] = value;
+          return true;
+        }
 
-      modelInstance.$visible = this._visibleFields
-      modelInstance.$hidden = this._hiddenFields
-    }))
+        modelInstance.$visible = this._visibleFields;
+        modelInstance.$hidden = this._hiddenFields;
+      })
+    );
 
-    return modelInstance
+    return modelInstance;
   }
 
   /**
@@ -277,9 +273,9 @@ class QueryBuilder {
    *
    * @private
    */
-  async _eagerLoad (modelInstances) {
+  async _eagerLoad(modelInstances) {
     if (_.size(modelInstances)) {
-      await new EagerLoad(this._eagerLoads).load(modelInstances)
+      await new EagerLoad(this._eagerLoads).load(modelInstances);
     }
   }
 
@@ -290,8 +286,8 @@ class QueryBuilder {
    *
    * @return {Object}
    */
-  formatter () {
-    return this.query.client.formatter(this.query)
+  formatter() {
+    return this.query.client.formatter(this.query);
   }
 
   /**
@@ -307,9 +303,9 @@ class QueryBuilder {
    *
    * @chainable
    */
-  ignoreScopes (scopes) {
-    this.scopesIterator.ignore(scopes)
-    return this
+  ignoreScopes(scopes) {
+    this.scopesIterator.ignore(scopes);
+    return this;
   }
 
   /**
@@ -320,33 +316,40 @@ class QueryBuilder {
    *
    * @return {Serializer} Instance of model serializer
    */
-  async fetch () {
+  async fetch() {
     /**
      * Apply all the scopes before fetching
      * data
      */
-    this._applyScopes()
+    this._applyScopes();
+
+    /**
+     * Fire beforeFetch event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.before.exec("fetch", this.query);
+    }
 
     /**
      * Execute query
      */
-    const rows = await this.query
+    const rows = await this.query;
 
     /**
      * Convert to an array of model instances
      */
-    const modelInstances = this._mapRowsToInstances(rows)
-    await this._eagerLoad(modelInstances)
+    const modelInstances = this._mapRowsToInstances(rows);
+    await this._eagerLoad(modelInstances);
 
     /**
      * Fire afterFetch event
      */
     if (this.Model.$hooks) {
-      await this.Model.$hooks.after.exec('fetch', modelInstances)
+      await this.Model.$hooks.after.exec("fetch", modelInstances);
     }
 
-    const Serializer = this.Model.resolveSerializer()
-    return new Serializer(modelInstances)
+    const Serializer = this.Model.resolveSerializer();
+    return new Serializer(modelInstances);
   }
 
   /**
@@ -357,26 +360,33 @@ class QueryBuilder {
    *
    * @return {Model|Null}
    */
-  async first () {
+  async first() {
     /**
      * Apply all the scopes before fetching
      * data
      */
-    this._applyScopes()
+    this._applyScopes();
 
-    const row = await this.query.first()
-    if (!row) {
-      return null
+    /**
+     * Fire beforeFind event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.before.exec("find", this.query);
     }
 
-    const modelInstance = this._mapRowToInstance(row)
-    await this._eagerLoad([modelInstance])
+    const row = await this.query.first();
+    if (!row) {
+      return null;
+    }
+
+    const modelInstance = this._mapRowToInstance(row);
+    await this._eagerLoad([modelInstance]);
 
     if (this.Model.$hooks) {
-      await this.Model.$hooks.after.exec('find', modelInstance)
+      await this.Model.$hooks.after.exec("find", modelInstance);
     }
 
-    return modelInstance
+    return modelInstance;
   }
 
   /**
@@ -389,32 +399,39 @@ class QueryBuilder {
    *
    * @return {Model|Null}
    */
-  async last (field = this.Model.primaryKey) {
+  async last(field = this.Model.primaryKey) {
     /**
      * Apply all the scopes before fetching
      * data
      */
-    this._applyScopes()
+    this._applyScopes();
 
-    const row = await this.query.orderBy(field, 'desc').first()
-    if (!row) {
-      return null
+    /**
+     * Fire beforeFind event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.before.exec("find", this.query);
     }
 
-    const modelInstance = this._mapRowToInstance(row)
+    const row = await this.query.orderBy(field, "desc").first();
+    if (!row) {
+      return null;
+    }
+
+    const modelInstance = this._mapRowToInstance(row);
 
     /**
      * Eagerload relations when defined on query
      */
     if (_.size(this._eagerLoads)) {
-      await modelInstance.loadMany(this._eagerLoads)
+      await modelInstance.loadMany(this._eagerLoads);
     }
 
     if (this.Model.$hooks) {
-      await this.Model.$hooks.after.exec('find', modelInstance)
+      await this.Model.$hooks.after.exec("find", modelInstance);
     }
 
-    return modelInstance
+    return modelInstance;
   }
 
   /**
@@ -428,13 +445,13 @@ class QueryBuilder {
    *
    * @throws {ModelNotFoundException} If unable to find first row
    */
-  async firstOrFail () {
-    const returnValue = await this.first()
+  async firstOrFail() {
+    const returnValue = await this.first();
     if (!returnValue) {
-      throw CE.ModelNotFoundException.raise(this.Model.name)
+      throw CE.ModelNotFoundException.raise(this.Model.name);
     }
 
-    return returnValue
+    return returnValue;
   }
 
   /**
@@ -449,37 +466,37 @@ class QueryBuilder {
    *
    * @return {Serializer}
    */
-  async paginate (page = 1, limit = 20) {
+  async paginate(page = 1, limit = 20) {
     /**
      * Apply all the scopes before fetching
      * data
      */
-    this._applyScopes()
-    const result = await this.query.paginate(page, limit)
+    this._applyScopes();
+    const result = await this.query.paginate(page, limit);
 
     /**
      * Convert to an array of model instances
      */
-    const modelInstances = this._mapRowsToInstances(result.data)
-    await this._eagerLoad(modelInstances)
+    const modelInstances = this._mapRowsToInstances(result.data);
+    await this._eagerLoad(modelInstances);
 
     /**
      * Pagination meta data
      */
-    const pages = _.omit(result, ['data'])
+    const pages = _.omit(result, ["data"]);
 
     /**
      * Fire afterPaginate event
      */
     if (this.Model.$hooks) {
-      await this.Model.$hooks.after.exec('paginate', modelInstances, pages)
+      await this.Model.$hooks.after.exec("paginate", modelInstances, pages);
     }
 
     /**
      * Return an instance of active model serializer
      */
-    const Serializer = this.Model.resolveSerializer()
-    return new Serializer(modelInstances, pages)
+    const Serializer = this.Model.resolveSerializer();
+    return new Serializer(modelInstances, pages);
   }
 
   /**
@@ -491,8 +508,8 @@ class QueryBuilder {
    *
    * @return {Array}
    */
-  async insert (attributes) {
-    return this.query.insert(attributes)
+  async insert(attributes) {
+    return this.query.insert(attributes);
   }
 
   /**
@@ -506,18 +523,18 @@ class QueryBuilder {
    *
    * @return {Promise}
    */
-  update (valuesOrModelInstance) {
+  update(valuesOrModelInstance) {
     /**
      * If update receives the model instance, then it just picks the dirty
      * fields and updates them
      */
     if (valuesOrModelInstance && valuesOrModelInstance instanceof this.Model === true) {
-      this._applyScopes()
-      return this.query.update(valuesOrModelInstance.dirty)
+      this._applyScopes();
+      return this.query.update(valuesOrModelInstance.dirty);
     }
 
-    const valuesCopy = _.clone(valuesOrModelInstance)
-    const fakeModel = new this.Model()
+    const valuesCopy = _.clone(valuesOrModelInstance);
+    const fakeModel = new this.Model();
 
     /**
      * Here we fill attributes on the model, so that the logic to
@@ -526,16 +543,16 @@ class QueryBuilder {
      *
      * For this model instance relies on `dirty` values.
      */
-    fakeModel.fill(valuesCopy)
+    fakeModel.fill(valuesCopy);
 
-    fakeModel._setUpdatedAt(valuesCopy)
-    fakeModel._formatDateFields(valuesCopy)
+    fakeModel._setUpdatedAt(valuesCopy);
+    fakeModel._formatDateFields(valuesCopy);
 
     /**
      * Apply all the scopes before update
      */
-    this._applyScopes()
-    return this.query.update(valuesCopy)
+    this._applyScopes();
+    return this.query.update(valuesCopy);
   }
 
   /**
@@ -546,9 +563,9 @@ class QueryBuilder {
    *
    * @return {Promise}
    */
-  delete () {
-    this._applyScopes()
-    return this.query.delete()
+  delete() {
+    this._applyScopes();
+    return this.query.delete();
   }
 
   /**
@@ -558,8 +575,8 @@ class QueryBuilder {
    *
    * @return {Number}
    */
-  truncate () {
-    return this.query.truncate()
+  truncate() {
+    return this.query.truncate();
   }
 
   /**
@@ -570,8 +587,8 @@ class QueryBuilder {
    *
    * @return {Array}
    */
-  ids () {
-    return this.pluck(this.Model.primaryKey)
+  ids() {
+    return this.pluck(this.Model.primaryKey);
   }
 
   /**
@@ -586,14 +603,18 @@ class QueryBuilder {
    *
    * @return {Object}
    */
-  async pair (lhs, rhs) {
-    this._applyScopes()
+  async pair(lhs, rhs) {
+    this._applyScopes();
 
-    const rows = await this.query
-    return _.transform(rows, (result, row) => {
-      result[row[lhs]] = row[rhs]
-      return result
-    }, {})
+    const rows = await this.query;
+    return _.transform(
+      rows,
+      (result, row) => {
+        result[row[lhs]] = row[rhs];
+        return result;
+      },
+      {}
+    );
   }
 
   /**
@@ -606,9 +627,9 @@ class QueryBuilder {
    *
    * @return {Collection}
    */
-  pickInverse (limit = 1) {
-    this.query.orderBy(this.Model.primaryKey, 'desc').limit(limit)
-    return this.fetch()
+  pickInverse(limit = 1) {
+    this.query.orderBy(this.Model.primaryKey, "desc").limit(limit);
+    return this.fetch();
   }
 
   /**
@@ -621,9 +642,9 @@ class QueryBuilder {
    *
    * @return {Collection}
    */
-  pick (limit = 1) {
-    this.query.orderBy(this.Model.primaryKey, 'asc').limit(limit)
-    return this.fetch()
+  pick(limit = 1) {
+    this.query.orderBy(this.Model.primaryKey, "asc").limit(limit);
+    return this.fetch();
   }
 
   /**
@@ -637,9 +658,9 @@ class QueryBuilder {
    *
    * @chainable
    */
-  with (relation, callback) {
-    this._eagerLoads[relation] = callback
-    return this
+  with(relation, callback) {
+    this._eagerLoads[relation] = callback;
+    return this;
   }
 
   /**
@@ -655,17 +676,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  has (relation, expression, value) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  has(relation, expression, value) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.has(_.first(_.keys(nested)), expression, value)
-      this._has(relationInstance, 'whereExists')
+      relationInstance.has(_.first(_.keys(nested)), expression, value);
+      this._has(relationInstance, "whereExists");
     } else {
-      this._has(relationInstance, 'whereExists', expression, value, 'whereRaw')
+      this._has(relationInstance, "whereExists", expression, value, "whereRaw");
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -679,17 +700,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  orHas (relation, expression, value) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  orHas(relation, expression, value) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.orHas(_.first(_.keys(nested)), expression, value)
-      this._has(relationInstance, 'orWhereExists')
+      relationInstance.orHas(_.first(_.keys(nested)), expression, value);
+      this._has(relationInstance, "orWhereExists");
     } else {
-      this._has(relationInstance, 'orWhereExists', expression, value, 'orWhereRaw')
+      this._has(relationInstance, "orWhereExists", expression, value, "orWhereRaw");
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -702,15 +723,15 @@ class QueryBuilder {
    *
    * @chainable
    */
-  doesntHave (relation) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  doesntHave(relation) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.doesntHave(_.first(_.keys(nested)))
+      relationInstance.doesntHave(_.first(_.keys(nested)));
     }
 
-    this._has(relationInstance, 'whereNotExists')
-    return this
+    this._has(relationInstance, "whereNotExists");
+    return this;
   }
 
   /**
@@ -722,15 +743,15 @@ class QueryBuilder {
    *
    * @chainable
    */
-  orDoesntHave (relation) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  orDoesntHave(relation) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.orDoesntHave(_.first(_.keys(nested)))
+      relationInstance.orDoesntHave(_.first(_.keys(nested)));
     }
 
-    this._has(relationInstance, 'orWhereNotExists')
-    return this
+    this._has(relationInstance, "orWhereNotExists");
+    return this;
   }
 
   /**
@@ -746,17 +767,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  whereHas (relation, callback, expression, value) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  whereHas(relation, callback, expression, value) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.whereHas(_.first(_.keys(nested)), callback, expression, value)
-      this._has(relationInstance, 'whereExists')
+      relationInstance.whereHas(_.first(_.keys(nested)), callback, expression, value);
+      this._has(relationInstance, "whereExists");
     } else {
-      this._has(relationInstance, 'whereExists', expression, value, 'whereRaw', callback)
+      this._has(relationInstance, "whereExists", expression, value, "whereRaw", callback);
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -771,17 +792,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  orWhereHas (relation, callback, expression, value) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  orWhereHas(relation, callback, expression, value) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.orWhereHas(_.first(_.keys(nested)), callback, expression, value)
-      this._has(relationInstance, 'orWhereExists')
+      relationInstance.orWhereHas(_.first(_.keys(nested)), callback, expression, value);
+      this._has(relationInstance, "orWhereExists");
     } else {
-      this._has(relationInstance, 'orWhereExists', expression, value, 'orWhereRaw', callback)
+      this._has(relationInstance, "orWhereExists", expression, value, "orWhereRaw", callback);
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -794,17 +815,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  whereDoesntHave (relation, callback) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  whereDoesntHave(relation, callback) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.whereDoesntHave(_.first(_.keys(nested)), callback)
-      this._has(relationInstance, 'whereNotExists')
+      relationInstance.whereDoesntHave(_.first(_.keys(nested)), callback);
+      this._has(relationInstance, "whereNotExists");
     } else {
-      this._has(relationInstance, 'whereNotExists', null, null, null, callback)
+      this._has(relationInstance, "whereNotExists", null, null, null, callback);
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -817,17 +838,17 @@ class QueryBuilder {
    *
    * @chainable
    */
-  orWhereDoesntHave (relation, callback) {
-    const { relationInstance, nested } = this._parseRelation(relation)
+  orWhereDoesntHave(relation, callback) {
+    const { relationInstance, nested } = this._parseRelation(relation);
 
     if (nested) {
-      relationInstance.orWhereDoesntHave(_.first(_.keys(nested)), callback)
-      this._has(relationInstance, 'orWhereNotExists')
+      relationInstance.orWhereDoesntHave(_.first(_.keys(nested)), callback);
+      this._has(relationInstance, "orWhereNotExists");
     } else {
-      this._has(relationInstance, 'orWhereNotExists', null, null, null, callback)
+      this._has(relationInstance, "orWhereNotExists", null, null, null, callback);
     }
 
-    return this
+    return this;
   }
 
   /**
@@ -846,62 +867,62 @@ class QueryBuilder {
    * query().withCount('profile as userProfile')
    * ```
    */
-  withCount (relation, callback) {
-    let { name, nested } = RelationsParser.parseRelation(relation)
+  withCount(relation, callback) {
+    let { name, nested } = RelationsParser.parseRelation(relation);
     if (nested) {
-      throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, 'withCount')
+      throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, "withCount");
     }
 
-    this._withCountCounter++
+    this._withCountCounter++;
 
     /**
      * Since user can set the `count as` statement, we need
      * to parse them properly.
      */
-    const tokens = name.match(/as\s(\w+)/)
-    let asStatement = `${name}_count`
+    const tokens = name.match(/as\s(\w+)/);
+    let asStatement = `${name}_count`;
     if (_.size(tokens)) {
-      asStatement = tokens[1]
-      name = name.replace(tokens[0], '').trim()
+      asStatement = tokens[1];
+      name = name.replace(tokens[0], "").trim();
     }
 
-    RelationsParser.validateRelationExistence(this.Model.prototype, name)
-    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name)
+    RelationsParser.validateRelationExistence(this.Model.prototype, name);
+    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name);
 
     /**
      * Call the callback with relationship instance
      * when callback is defined
      */
-    if (typeof (callback) === 'function') {
-      callback(relationInstance)
+    if (typeof callback === "function") {
+      callback(relationInstance);
     }
 
-    const columns = []
+    const columns = [];
 
     /**
      * Add `*` to columns only when there are no existing columns selected
      */
-    if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
-      columns.push('*')
+    if (!_.find(this.query._statements, statement => statement.grouping === "columns")) {
+      columns.push("*");
     }
 
-    columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))
+    columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement));
 
     /**
      * Saving reference of count inside _sideloaded
      * so that we can set them later to the
      * model.$sideLoaded
      */
-    this._sideLoaded.push(asStatement)
+    this._sideLoaded.push(asStatement);
 
     /**
      * Clear previously selected columns and set new
      */
-    this.query.select(columns)
+    this.query.select(columns);
 
-    relationInstance.applyRelatedScopes()
+    relationInstance.applyRelatedScopes();
 
-    return this
+    return this;
   }
 
   /**
@@ -916,9 +937,9 @@ class QueryBuilder {
    *
    * @chainable
    */
-  setVisible (fields) {
-    this._visibleFields = fields
-    return this
+  setVisible(fields) {
+    this._visibleFields = fields;
+    return this;
   }
 
   /**
@@ -933,9 +954,9 @@ class QueryBuilder {
    *
    * @chainable
    */
-  setHidden (fields) {
-    this._hiddenFields = fields
-    return this
+  setHidden(fields) {
+    this._hiddenFields = fields;
+    return this;
   }
 
   /**
@@ -945,27 +966,27 @@ class QueryBuilder {
    *
    * @return {QueryBuilde}
    */
-  clone () {
-    const clonedQuery = new QueryBuilder(this.Model, this.connectionString)
-    clonedQuery.query = this.query.clone()
-    clonedQuery.query.subQuery = this.query.subQuery
+  clone() {
+    const clonedQuery = new QueryBuilder(this.Model, this.connectionString);
+    clonedQuery.query = this.query.clone();
+    clonedQuery.query.subQuery = this.query.subQuery;
 
-    clonedQuery._eagerLoads = this._eagerLoads
-    clonedQuery._sideLoaded = this._sideLoaded
-    clonedQuery._visibleFields = this._visibleFields
-    clonedQuery._hiddenFields = this._hiddenFields
-    clonedQuery._withCountCounter = this._withCountCounter
-    clonedQuery.scopesIterator = this.scopesIterator
+    clonedQuery._eagerLoads = this._eagerLoads;
+    clonedQuery._sideLoaded = this._sideLoaded;
+    clonedQuery._visibleFields = this._visibleFields;
+    clonedQuery._hiddenFields = this._hiddenFields;
+    clonedQuery._withCountCounter = this._withCountCounter;
+    clonedQuery.scopesIterator = this.scopesIterator;
 
-    return clonedQuery
+    return clonedQuery;
   }
 }
 
-aggregates.concat(queryMethods).forEach((method) => {
-  QueryBuilder.prototype[method] = function (...args) {
-    this._applyScopes()
-    return this.query[method](...args)
-  }
-})
+aggregates.concat(queryMethods).forEach(method => {
+  QueryBuilder.prototype[method] = function(...args) {
+    this._applyScopes();
+    return this.query[method](...args);
+  };
+});
 
-module.exports = QueryBuilder
+module.exports = QueryBuilder;
