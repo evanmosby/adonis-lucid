@@ -60,6 +60,9 @@ class MigrationStatus extends BaseMigration {
         return [migration.name, migration.migrated ? 'Yes' : 'No', migration.batch || '']
       })
       this.table(head, body)
+      return migrations.map((migration) => {
+        return {name: migration.name, migrated: migration.migrated ? true : false, batch: migration.batch || null}
+      })
     } catch (error) {
       console.log(error)
     }
