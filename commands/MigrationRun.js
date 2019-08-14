@@ -60,7 +60,7 @@ class MigrationRun extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle ({connectionName}, { log, force, silent, seed, keepAlive }) {
+  async handle (args, { log, force, silent, seed, keepAlive }) {
     try {
       this._validateState(force)
 
@@ -70,6 +70,7 @@ class MigrationRun extends BaseMigration {
 
       const startTime = process.hrtime()
       // EMM: added connectionName property (undefined by default) to filter out migrations by connection
+      const connectionName = args ? args.connectionName : undefined
       const { migrated, status, queries } = await this.migration.up(this._getSchemaFiles(connectionName), log)
 
       /**
