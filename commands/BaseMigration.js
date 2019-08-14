@@ -45,7 +45,7 @@ class BaseMigration extends Command {
         }
       });
     }
-    return hello;
+    return schemaFiles;
   }
 
   /**
