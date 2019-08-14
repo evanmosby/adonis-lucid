@@ -48,23 +48,26 @@ class MigrationStatus extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle (args, { keepAlive }) {
+  async handle(args, { keepAlive }) {
     if (keepAlive) {
-      this.migration.keepAlive()
+      this.migration.keepAlive();
     }
 
     try {
-      const migrations = await this.migration.status(this._getSchemaFiles())
-      const head = ['File name', 'Migrated', 'Batch']
-      const body = migrations.map((migration) => {
-        return [migration.name, migration.migrated ? 'Yes' : 'No', migration.batch || '']
-      })
-      this.table(head, body)
-      return migrations.map((migration) => {
-        return {name: migration.name, migrated: migration.migrated ? true : false, batch: migration.batch || null}
-      })
+      const migrations = await this.migration.status(this._getSchemaFiles());
+      if (this.viaAce) {
+        const head = ["File name", "Migrated", "Batch"];
+        const body = migrations.map(migration => {
+          return [migration.name, migration.migrated ? "Yes" : "No", migration.batch || ""];
+        });
+        this.table(head, body);
+      } else {
+        return migrations.map(migration => {
+          return { name: migration.name, migrated: migration.migrated ? true : false, batch: migration.batch || null };
+        });
+      }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
 }
