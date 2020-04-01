@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,14 +7,14 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-require('./MonkeyPatch')
+require("./MonkeyPatch");
 
-const _ = require('lodash')
-const Database = require('.')
-const CE = require('../Exceptions')
-const proxyGet = require('../../lib/proxyGet')
+const _ = require("lodash");
+const Database = require(".");
+const CE = require("../Exceptions");
+const proxyGet = require("../../lib/proxyGet");
 
 /**
  * DatabaseManager is a layer on top of @ref('Database') class. It
@@ -40,12 +40,12 @@ const proxyGet = require('../../lib/proxyGet')
  * @class DatabaseManager
  */
 class DatabaseManager {
-  constructor (Config) {
-    this.Config = Config
-    this._connectionPools = {}
+  constructor(Config) {
+    this.Config = Config;
+    this._connectionPools = {};
     return new Proxy(this, {
-      get: proxyGet('connection', true)
-    })
+      get: proxyGet("connection", true)
+    });
   }
 
   /**
@@ -63,23 +63,31 @@ class DatabaseManager {
    *
    * @throws {missingDatabaseConnection} If connection is not defined in config file.
    */
-  connection (name) {
-    name = name || this.Config.get('database.connection')
+  connection(name) {
+    name = name || this.Config.get("database.connection");
 
     /**
      * Return connection if part of connection pool already
      */
     if (this._connectionPools[name]) {
-      return this._connectionPools[name]
+      return this._connectionPools[name];
     }
 
-    const connectionSettings = this.Config.get(`database.${name}`)
+    const connectionSettings = this.Config.get(`database.${name}`);
+
     if (!connectionSettings) {
-      throw CE.RuntimeException.missingDatabaseConnection(name)
+      throw CE.RuntimeException.missingDatabaseConnection(name);
     }
 
-    this._connectionPools[name] = new Database(connectionSettings)
-    return this._connectionPools[name]
+    /**
+     * Account for domain config... remove if blank
+     */
+    if (!connectionSettings.domain) {
+      delete connectionSettings.domain
+    }
+
+    this._connectionPools[name] = new Database(connectionSettings);
+    return this._connectionPools[name];
   }
 
   /**
@@ -107,14 +115,14 @@ class DatabaseManager {
    * Database.close('mysql')
    * ```
    */
-  close (names) {
-    let connections = names || _.keys(this._connectionPools)
-    connections = !Array.isArray(connections) ? [connections] : connections
-    _.each(connections, (name) => {
-      this._connectionPools[name].close()
-      delete this._connectionPools[name]
-    })
+  close(names) {
+    let connections = names || _.keys(this._connectionPools);
+    connections = !Array.isArray(connections) ? [connections] : connections;
+    _.each(connections, name => {
+      this._connectionPools[name].close();
+      delete this._connectionPools[name];
+    });
   }
 }
 
-module.exports = DatabaseManager
+module.exports = DatabaseManager;
