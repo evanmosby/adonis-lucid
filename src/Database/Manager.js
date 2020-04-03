@@ -82,7 +82,8 @@ class DatabaseManager {
   /**
      * Account for domain config... remove if blank
      */
-    if (!connectionSettings.domain || connectionSettings.domain === "") {
+      
+    if (!connectionSettings.connection.domain || connectionSettings.connection.domain === "") {
       delete connectionSettings.connection.domain
     }
     
