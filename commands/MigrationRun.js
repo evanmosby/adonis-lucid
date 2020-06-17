@@ -71,7 +71,7 @@ class MigrationRun extends BaseMigration {
       const startTime = process.hrtime()
       // EMM: added connectionName property (undefined by default) to filter out migrations by connection
       const connectionName = args ? args.connectionName : undefined
-      const { migrated, status, queries } = await this.migration.up(this._getSchemaFiles(connectionName), log)
+      const { migrated, status, queries } = await this.migration.up(this._getSchemaFiles(connectionName), log, connectionName)
 
       /**
        * Tell user that there is nothing to migrate
