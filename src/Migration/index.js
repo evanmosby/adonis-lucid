@@ -48,7 +48,7 @@ class Migration {
    * @privates
    */
   async _makeMigrationsTable(connectionName) {
-    const hasTable = await this.getConnection(connectionName).schema.hasTable(this._migrationsTable);
+    const hasTable = await this._getConnection(connectionName).schema.hasTable(this._migrationsTable);
     /**
      * We need to run 2 queries, since `createTableIfNotExists` doesn't
      * work with postgres. Check following issue for more info.
@@ -56,7 +56,7 @@ class Migration {
      * https://github.com/adonisjs/adonis-lucid/issues/172
      */
     if (!hasTable) {
-      await this.getConnection(connectionName).schema.createTable(this._migrationsTable, (table) => {
+      await this._getConnection(connectionName).schema.createTable(this._migrationsTable, (table) => {
         table.increments();
         table.string("name");
         table.integer("batch");
@@ -77,10 +77,10 @@ class Migration {
    */
   async _makeLockTable(connectionName) {
    
-    const hasTable = await this.getConnection(connectionName).schema.hasTable(this._lockTable)
+    const hasTable = await this._getConnection(connectionName).schema.hasTable(this._lockTable)
 
     if (!hasTable) {
-      await this.getConnection(connectionName).schema.createTable(this._lockTable, (table) => {
+      await this._getConnection(connectionName).schema.createTable(this._lockTable, (table) => {
         table.increments()
         table.boolean('is_locked')
       })
@@ -98,7 +98,7 @@ class Migration {
    */
   _addLock(connectionName) {
   
-    return this.getConnection(connectionName).insert({ is_locked: true }).into(this._lockTable)
+    return this._getConnection(connectionName).insert({ is_locked: true }).into(this._lockTable)
   }
 
   /**
@@ -113,7 +113,7 @@ class Migration {
    */
   _removeLock(connectionName) {
     
-    return this.getConnection(connectionName).schema.dropTableIfExists(this._lockTable)
+    return this._getConnection(connectionName).schema.dropTableIfExists(this._lockTable)
   }
 
   /**
@@ -129,7 +129,7 @@ class Migration {
    */
   async _checkForLock(connectionName) {
    
-    const hasLock = await this.getConnection(connectionName)
+    const hasLock = await this._getConnection(connectionName)
       .from(this._lockTable)
       .where('is_locked', 1)
       .orderBy('id', 'desc')
@@ -154,7 +154,7 @@ class Migration {
    */
   async _getLatestBatch(connectionName) {
   
-    const batch = await this.getConnection(connectionName).table(this._migrationsTable).max('batch as batch')
+    const batch = await this._getConnection(connectionName).table(this._migrationsTable).max('batch as batch')
     return Number(_.get(batch, '0.batch', 0))
   }
 
@@ -174,7 +174,7 @@ class Migration {
    */
   _addForBatch(name, batch, connectionName) {
  
-    return this.getConnection(connectionName).table(this._migrationsTable).insert({ name, batch })
+    return this._getConnection(connectionName).table(this._migrationsTable).insert({ name, batch })
   }
 
   /**
@@ -192,7 +192,7 @@ class Migration {
    */
   _remove(name, connectionName) {
   
-    return this.getConnection(connectionName).table(this._migrationsTable).where('name', name).delete()
+    return this._getConnection(connectionName).table(this._migrationsTable).where('name', name).delete()
   }
 
   /**
@@ -213,7 +213,7 @@ class Migration {
    */
   _getAfterBatch(batch = 0, connectionName) {
     
-    const query = this.getConnection(connectionName).table(this._migrationsTable)
+    const query = this._getConnection(connectionName).table(this._migrationsTable)
 
     if (batch > 0) {
       query.where('batch', '>', batch)
@@ -240,7 +240,7 @@ class Migration {
     
     const schemas = direction === 'down'
       ? await this._getAfterBatch(batch)
-      : await this.getConnection(connectionName).table(this._migrationsTable).pluck('name')
+      : await this._getConnection(connectionName).table(this._migrationsTable).pluck('name')
 
     return direction === 'down' ? _.reverse(_.intersection(names, schemas)) : _.difference(names, schemas)
   }
