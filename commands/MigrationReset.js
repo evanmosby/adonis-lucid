@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,11 +7,11 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const BaseMigration = require('./BaseMigration')
-const _ = require('lodash')
-const prettyHrTime = require('pretty-hrtime')
+const BaseMigration = require("./BaseMigration");
+const _ = require("lodash");
+const prettyHrTime = require("pretty-hrtime");
 
 class MigrationReset extends BaseMigration {
   /**
@@ -21,14 +21,14 @@ class MigrationReset extends BaseMigration {
    *
    * @return {String}
    */
-  static get signature () {
+  static get signature() {
     return `
     migration:reset
     { -f, --force: Forcefully run migrations in production }
     { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
     { -a, --keep-alive: Do not close the database connection }
-    `
+    `;
   }
 
   /**
@@ -38,8 +38,8 @@ class MigrationReset extends BaseMigration {
    *
    * @return {String}
    */
-  static get description () {
-    return 'Rollback migration to the first batch'
+  static get description() {
+    return "Rollback migration to the first batch";
   }
 
   /**
@@ -57,31 +57,37 @@ class MigrationReset extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, silent, keepAlive }) {
+  async handle(args, { log, force, silent, keepAlive }) {
     try {
-      this._validateState(force)
+      this._validateState(force);
 
       if (keepAlive) {
-        this.migration.keepAlive()
+        this.migration.keepAlive();
       }
 
-      const startTime = process.hrtime()
-      const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), 0, log)
+      const startTime = process.hrtime();
+      const { migrated, status, queries } = await this.migration.down(
+        this._getSchemaFiles(),
+        0,
+        log
+      );
 
       /**
        * Tell user that there is nothing to migrate
        */
-      if (status === 'skipped') {
-        this.execIfNot(silent, () => this.info('Already at the last batch'))
+      if (status === "skipped") {
+        this.execIfNot(silent, () => this.info("Already at the last batch"));
       }
 
       /**
        * Log files that been migrated successfully
        */
-      if (status === 'completed' && !queries) {
-        const endTime = process.hrtime(startTime)
-        migrated.forEach((name) => this.execIfNot(silent, () => this.completed('rollback', `${name}.js`)))
-        this.success(`Reset completed in ${prettyHrTime(endTime)}`)
+      if (status === "completed" && !queries) {
+        const endTime = process.hrtime(startTime);
+        migrated.forEach((name) =>
+          this.execIfNot(silent, () => this.completed("rollback", `${name}.js`))
+        );
+        this.success(`Reset completed in ${prettyHrTime(endTime)}`);
       }
 
       /**
@@ -89,19 +95,27 @@ class MigrationReset extends BaseMigration {
        */
       if (queries) {
         _.each(queries, ({ queries, name }) => {
-          this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
-          _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
-          console.log('\n')
-        })
+          this.execIfNot(silent, () =>
+            console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
+          );
+          _.each(queries, (query) =>
+            this.execIfNot(silent, () => console.log(`  ${query}`))
+          );
+          console.log("\n");
+        });
       }
 
       if (!this.viaAce) {
-        return { status, migrated, queries }
+        return { status, migrated, queries };
       }
     } catch (error) {
-      console.log(error)
+      if (!this.viaAce) {
+        throw new Error(error);
+      } else {
+        console.log(error);
+      }
     }
   }
 }
 
-module.exports = MigrationReset
+module.exports = MigrationReset;

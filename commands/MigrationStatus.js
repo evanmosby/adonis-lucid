@@ -67,7 +67,11 @@ class MigrationStatus extends BaseMigration {
         });
       }
     } catch (error) {
-      console.log(error);
+      if (!this.viaAce) {
+        throw new Error(error);
+      } else {
+        console.log(error);
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,12 +7,12 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const BaseMigration = require('./BaseMigration')
-const _ = require('lodash')
-const prettyHrTime = require('pretty-hrtime')
-const ace = require('@adonisjs/ace')
+const BaseMigration = require("./BaseMigration");
+const _ = require("lodash");
+const prettyHrTime = require("pretty-hrtime");
+const ace = require("@adonisjs/ace");
 
 class MigrationRun extends BaseMigration {
   /**
@@ -22,7 +22,7 @@ class MigrationRun extends BaseMigration {
    *
    * @return {String}
    */
-  static get signature () {
+  static get signature() {
     return `
     migration:run
     { -f, --force: Forcefully run migrations in production }
@@ -30,7 +30,7 @@ class MigrationRun extends BaseMigration {
     { --seed: Seed the database after migration finished }
     { --log: Log SQL queries instead of executing them }
     { -a, --keep-alive: Do not close the database connection }
-    `
+    `;
   }
 
   /**
@@ -40,8 +40,8 @@ class MigrationRun extends BaseMigration {
    *
    * @return {String}
    */
-  static get description () {
-    return 'Run all pending migrations'
+  static get description() {
+    return "Run all pending migrations";
   }
 
   /**
@@ -60,33 +60,41 @@ class MigrationRun extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, silent, seed, keepAlive }) {
+  async handle(args, { log, force, silent, seed, keepAlive }) {
     try {
-      this._validateState(force)
+      this._validateState(force);
 
       if (keepAlive) {
-        this.migration.keepAlive()
+        this.migration.keepAlive();
       }
 
-      const startTime = process.hrtime()
+      const startTime = process.hrtime();
       // EMM: added connectionName property (undefined by default) to filter out migrations by connection
-      const connectionName = args ? args.connectionName : undefined
-      const { migrated, status, queries } = await this.migration.up(this._getSchemaFiles(connectionName), log, connectionName)
+      const connectionName = args ? args.connectionName : undefined;
+      const { migrated, status, queries } = await this.migration.up(
+        this._getSchemaFiles(connectionName),
+        log,
+        connectionName
+      );
 
       /**
        * Tell user that there is nothing to migrate
        */
-      if (status === 'skipped') {
-        this.execIfNot(silent, () => this.info('Nothing to migrate'))
+      if (status === "skipped") {
+        this.execIfNot(silent, () => this.info("Nothing to migrate"));
       }
 
       /**
        * Log files that been migrated successfully
        */
-      if (status === 'completed' && !queries) {
-        const endTime = process.hrtime(startTime)
-        migrated.forEach((name) => this.execIfNot(silent, () => this.completed('migrate', `${name}.js`)))
-        this.success(`Database migrated successfully in ${prettyHrTime(endTime)}`)
+      if (status === "completed" && !queries) {
+        const endTime = process.hrtime(startTime);
+        migrated.forEach((name) =>
+          this.execIfNot(silent, () => this.completed("migrate", `${name}.js`))
+        );
+        this.success(
+          `Database migrated successfully in ${prettyHrTime(endTime)}`
+        );
       }
 
       /**
@@ -94,27 +102,35 @@ class MigrationRun extends BaseMigration {
        */
       if (queries) {
         _.each(queries, ({ queries, name }) => {
-          this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
-          _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
-          console.log('\n')
-        })
+          this.execIfNot(silent, () =>
+            console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
+          );
+          _.each(queries, (query) =>
+            this.execIfNot(silent, () => console.log(`  ${query}`))
+          );
+          console.log("\n");
+        });
       }
 
       /**
        * If seed is passed, seed the DB after migration
        */
       if (seed) {
-        await ace.call('seed', {}, { keepAlive, force })
+        await ace.call("seed", {}, { keepAlive, force });
       }
 
       if (!this.viaAce) {
-        return { status, migrated, queries }
+        return { status, migrated, queries };
       }
     } catch (error) {
-      console.log(error)
-      process.exit(1)
+      if (!this.viaAce) {
+        throw new Error(error);
+      } else {
+        console.log(error);
+        process.exit(1);
+      }
     }
   }
 }
 
-module.exports = MigrationRun
+module.exports = MigrationRun;

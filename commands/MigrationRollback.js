@@ -103,7 +103,11 @@ class MirationRollback extends BaseMigration {
         return { status, migrated, queries }
       }
     } catch (error) {
-      console.log(error)
+      if (!this.viaAce) {
+        throw new Error(error);
+      } else {
+        console.log(error);
+      }
     }
   }
 }
