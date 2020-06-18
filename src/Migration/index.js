@@ -60,7 +60,7 @@ class Migration {
         table.increments();
         table.string("name");
         table.integer("batch");
-        table.timestamp("migration_time").defaultsTo(theDB.fn.now());
+        table.timestamp("migration_time").defaultsTo(this._getConnection(connectionName).fn.now());
       });
     }
   }  
@@ -484,7 +484,6 @@ class Migration {
    * @return {Object}
    */
   async status(schemas, connectionName) {
-    const theDB = connectionName ? this.db.connection(connectionName) : this.db;
     await this._makeMigrationsTable(connectionName)
 
     const migrated = await this.db
