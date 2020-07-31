@@ -44,7 +44,7 @@ class DatabaseManager {
     this.Config = Config;
     this._connectionPools = {};
     return new Proxy(this, {
-      get: proxyGet("connection", true)
+      get: proxyGet("connection", true),
     });
   }
 
@@ -79,14 +79,17 @@ class DatabaseManager {
       throw CE.RuntimeException.missingDatabaseConnection(name);
     }
 
-  /**
+    /**
      * Account for domain config... remove if blank
      */
-      
-    if (!connectionSettings.connection.domain || connectionSettings.connection.domain === "") {
-      delete connectionSettings.connection.domain
+
+    if (
+      !connectionSettings.connection.domain ||
+      connectionSettings.connection.domain === ""
+    ) {
+      delete connectionSettings.connection.domain;
     }
-    
+
     this._connectionPools[name] = new Database(connectionSettings);
     return this._connectionPools[name];
   }
@@ -119,9 +122,11 @@ class DatabaseManager {
   close(names) {
     let connections = names || _.keys(this._connectionPools);
     connections = !Array.isArray(connections) ? [connections] : connections;
-    _.each(connections, name => {
-      this._connectionPools[name].close();
-      delete this._connectionPools[name];
+    _.each(connections, (name) => {
+      if (Object.keys(this._connectionPools).includes(name)) {
+        this._connectionPools[name].close();
+        delete this._connectionPools[name];
+      }
     });
   }
 }

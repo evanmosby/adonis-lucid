@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,10 +7,10 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const _ = require('lodash')
-const CE = require('../Exceptions')
+const _ = require("lodash");
+const CE = require("../Exceptions");
 
 /**
  * Migration class is used to migrate the database by
@@ -27,13 +27,16 @@ const CE = require('../Exceptions')
  */
 class Migration {
   constructor(Config, Database) {
-    this.db = Database
-    this._migrationsTable = Config.get('database.migrationsTable', 'adonis_schema')
-    this._lockTable = `${this._migrationsTable}_lock`
-    this.isKeepAliveEnabled = false
+    this.db = Database;
+    this._migrationsTable = Config.get(
+      "database.migrationsTable",
+      "adonis_schema"
+    );
+    this._lockTable = `${this._migrationsTable}_lock`;
+    this.isKeepAliveEnabled = false;
   }
 
-  _getConnection(connectionName){
+  _getConnection(connectionName) {
     return connectionName ? this.db.connection(connectionName) : this.db;
   }
 
@@ -48,7 +51,9 @@ class Migration {
    * @privates
    */
   async _makeMigrationsTable(connectionName) {
-    const hasTable = await this._getConnection(connectionName).schema.hasTable(this._migrationsTable);
+    const hasTable = await this._getConnection(connectionName).schema.hasTable(
+      this._migrationsTable
+    );
     /**
      * We need to run 2 queries, since `createTableIfNotExists` doesn't
      * work with postgres. Check following issue for more info.
@@ -56,14 +61,19 @@ class Migration {
      * https://github.com/adonisjs/adonis-lucid/issues/172
      */
     if (!hasTable) {
-      await this._getConnection(connectionName).schema.createTable(this._migrationsTable, (table) => {
-        table.increments();
-        table.string("name");
-        table.integer("batch");
-        table.timestamp("migration_time").defaultsTo(this._getConnection(connectionName).fn.now());
-      });
+      await this._getConnection(connectionName).schema.createTable(
+        this._migrationsTable,
+        (table) => {
+          table.increments();
+          table.string("name");
+          table.integer("batch");
+          table
+            .timestamp("migration_time")
+            .defaultsTo(this._getConnection(connectionName).fn.now());
+        }
+      );
     }
-  }  
+  }
 
   /**
    * Creates the lock table if it doesn't exists
@@ -76,14 +86,18 @@ class Migration {
    * @private
    */
   async _makeLockTable(connectionName) {
-   
-    const hasTable = await this._getConnection(connectionName).schema.hasTable(this._lockTable)
+    const hasTable = await this._getConnection(connectionName).schema.hasTable(
+      this._lockTable
+    );
 
     if (!hasTable) {
-      await this._getConnection(connectionName).schema.createTable(this._lockTable, (table) => {
-        table.increments()
-        table.boolean('is_locked')
-      })
+      await this._getConnection(connectionName).schema.createTable(
+        this._lockTable,
+        (table) => {
+          table.increments();
+          table.boolean("is_locked");
+        }
+      );
     }
   }
 
@@ -97,8 +111,9 @@ class Migration {
    * @private
    */
   _addLock(connectionName) {
-  
-    return this._getConnection(connectionName).insert({ is_locked: true }).into(this._lockTable)
+    return this._getConnection(connectionName)
+      .insert({ is_locked: true })
+      .into(this._lockTable);
   }
 
   /**
@@ -112,8 +127,9 @@ class Migration {
    * @private
    */
   _removeLock(connectionName) {
-    
-    return this._getConnection(connectionName).schema.dropTableIfExists(this._lockTable)
+    return this._getConnection(connectionName).schema.dropTableIfExists(
+      this._lockTable
+    );
   }
 
   /**
@@ -128,15 +144,14 @@ class Migration {
    * @private
    */
   async _checkForLock(connectionName) {
-   
     const hasLock = await this._getConnection(connectionName)
       .from(this._lockTable)
-      .where('is_locked', 1)
-      .orderBy('id', 'desc')
-      .first()
+      .where("is_locked", 1)
+      .orderBy("id", "desc")
+      .first();
 
     if (hasLock) {
-      throw CE.RuntimeException.migrationsAreLocked(this._lockTable)
+      throw CE.RuntimeException.migrationsAreLocked(this._lockTable);
     }
   }
 
@@ -153,9 +168,10 @@ class Migration {
    * @private
    */
   async _getLatestBatch(connectionName) {
-  
-    const batch = await this._getConnection(connectionName).table(this._migrationsTable).max('batch as batch')
-    return Number(_.get(batch, '0.batch', 0))
+    const batch = await this._getConnection(connectionName)
+      .table(this._migrationsTable)
+      .max("batch as batch");
+    return Number(_.get(batch, "0.batch", 0));
   }
 
   /**
@@ -173,8 +189,9 @@ class Migration {
    * @private
    */
   _addForBatch(name, batch, connectionName) {
- 
-    return this._getConnection(connectionName).table(this._migrationsTable).insert({ name, batch })
+    return this._getConnection(connectionName)
+      .table(this._migrationsTable)
+      .insert({ name, batch });
   }
 
   /**
@@ -191,8 +208,10 @@ class Migration {
    * @private
    */
   _remove(name, connectionName) {
-  
-    return this._getConnection(connectionName).table(this._migrationsTable).where('name', name).delete()
+    return this._getConnection(connectionName)
+      .table(this._migrationsTable)
+      .where("name", name)
+      .delete();
   }
 
   /**
@@ -212,14 +231,15 @@ class Migration {
    * @private
    */
   _getAfterBatch(batch = 0, connectionName) {
-    
-    const query = this._getConnection(connectionName).table(this._migrationsTable)
+    const query = this._getConnection(connectionName).table(
+      this._migrationsTable
+    );
 
     if (batch > 0) {
-      query.where('batch', '>', batch)
+      query.where("batch", ">", batch);
     }
 
-    return query.orderBy('name').pluck('name')
+    return query.orderBy("name").pluck("name");
   }
 
   /**
@@ -236,13 +256,17 @@ class Migration {
    *
    * @private
    */
-  async _getDiff(names, direction = 'up', batch, connectionName) {
-    
-    const schemas = direction === 'down'
-      ? await this._getAfterBatch(batch)
-      : await this._getConnection(connectionName).table(this._migrationsTable).pluck('name')
+  async _getDiff(names, direction = "up", batch, connectionName) {
+    const schemas =
+      direction === "down"
+        ? await this._getAfterBatch(batch)
+        : await this._getConnection(connectionName)
+            .table(this._migrationsTable)
+            .pluck("name");
 
-    return direction === 'down' ? _.reverse(_.intersection(names, schemas)) : _.difference(names, schemas)
+    return direction === "down"
+      ? _.reverse(_.intersection(names, schemas))
+      : _.difference(names, schemas);
   }
 
   /**
@@ -260,9 +284,9 @@ class Migration {
    * @private
    */
   async _executeSchema(schemaInstance, direction, toSQL, name) {
-    await schemaInstance[direction]()
-    const queries = await schemaInstance.executeActions(toSQL)
-    return toSQL ? { queries, name } : void 0
+    await schemaInstance[direction]();
+    const queries = await schemaInstance.executeActions(toSQL);
+    return toSQL ? { queries, name } : void 0;
   }
 
   /**
@@ -280,8 +304,16 @@ class Migration {
    */
   async _execute(schemas, direction, batch, toSQL, connectionName) {
     for (let schema in schemas) {
-      await this._executeSchema(new schemas[schema](this.db), direction, null, null, connectionName)
-      direction === 'up' ? await this._addForBatch(schema, batch, connectionName) : await this._remove(schema, connectionName)
+      await this._executeSchema(
+        new schemas[schema](this.db),
+        direction,
+        null,
+        null,
+        connectionName
+      );
+      direction === "up"
+        ? await this._addForBatch(schema, batch, connectionName)
+        : await this._remove(schema, connectionName);
     }
   }
 
@@ -299,9 +331,17 @@ class Migration {
    * @private
    */
   async _getQueries(schemas, direction, connectionName) {
-    return Promise.all(_.map(schemas, (Schema, name) => {
-      return this._executeSchema(new Schema(this.db), direction, true, name, connectionName)
-    }))
+    return Promise.all(
+      _.map(schemas, (Schema, name) => {
+        return this._executeSchema(
+          new Schema(this.db),
+          direction,
+          true,
+          name,
+          connectionName
+        );
+      })
+    );
   }
 
   /**
@@ -313,10 +353,10 @@ class Migration {
    * @return {void}
    */
   async _cleanup(connectionName) {
-    await this._removeLock(connectionName)
+    await this._removeLock(connectionName);
 
     if (!this.isKeepAliveEnabled) {
-      this.db.close()
+      this.db.close();
     }
   }
 
@@ -330,7 +370,7 @@ class Migration {
    * @return {void}
    */
   keepAlive(enabled = true) {
-    this.isKeepAliveEnabled = enabled
+    this.isKeepAliveEnabled = enabled;
   }
 
   /**
@@ -345,28 +385,37 @@ class Migration {
    * @throws {Error} If any of schema file throws exception
    */
   async up(schemas, toSQL, connectionName) {
-    await this._makeMigrationsTable(connectionName)
-    await this._makeLockTable(connectionName)
-    await this._checkForLock(connectionName)
-    await this._addLock(connectionName)
+    await this._makeMigrationsTable(connectionName);
+    await this._makeLockTable(connectionName);
+    await this._checkForLock(connectionName);
+    await this._addLock(connectionName);
 
-    const diff = await this._getDiff(_.keys(schemas), 'up', null, connectionName)
+    const diff = await this._getDiff(
+      _.keys(schemas),
+      "up",
+      null,
+      connectionName
+    );
 
     /**
      * Can't do much since all is good
      */
     if (!_.size(diff)) {
-      await this._cleanup(connectionName)
-      return { migrated: [], status: 'skipped' }
+      await this._cleanup(connectionName);
+      return { migrated: [], status: "skipped" };
     }
 
     /**
      * Getting a list of filtered schemas in the correct order
      */
-    const filteredSchemas = _.transform(diff, (result, name) => {
-      result[name] = schemas[name]
-      return name
-    }, {})
+    const filteredSchemas = _.transform(
+      diff,
+      (result, name) => {
+        result[name] = schemas[name];
+        return name;
+      },
+      {}
+    );
 
     /**
      * If log is to true, return array of nested queries
@@ -374,12 +423,16 @@ class Migration {
      */
     if (toSQL) {
       try {
-        const queries = await this._getQueries(filteredSchemas, 'up', connectionName)
-        await this._cleanup()
-        return { migrated: [], status: 'completed', queries }
+        const queries = await this._getQueries(
+          filteredSchemas,
+          "up",
+          connectionName
+        );
+        await this._cleanup();
+        return { migrated: [], status: "completed", queries };
       } catch (error) {
-        await this._cleanup(connectionName)
-        throw error
+        await this._cleanup(connectionName);
+        throw error;
       }
     }
 
@@ -387,13 +440,19 @@ class Migration {
      * Otherwise execute schema files
      */
     try {
-      const batch = await this._getLatestBatch(connectionName)
-      await this._execute(filteredSchemas, 'up', batch + 1, toSQL, connectionName)
-      await this._cleanup(connectionName)
-      return { migrated: diff, status: 'completed' }
+      const batch = await this._getLatestBatch(connectionName);
+      await this._execute(
+        filteredSchemas,
+        "up",
+        batch + 1,
+        toSQL,
+        connectionName
+      );
+      await this._cleanup(connectionName);
+      return { migrated: diff, status: "completed" };
     } catch (error) {
-      await this._cleanup(connectionName)
-      throw error
+      await this._cleanup(connectionName);
+      throw error;
     }
   }
 
@@ -412,38 +471,42 @@ class Migration {
    * @throws {Error} If something blows in schema file
    */
   async down(schemas, batch, toSQL = false, connectionName) {
-    await this._makeMigrationsTable(connectionName)
-    await this._makeLockTable(connectionName)
-    await this._checkForLock(connectionName)
-    await this._addLock(connectionName)
+    await this._makeMigrationsTable(connectionName);
+    await this._makeLockTable(connectionName);
+    await this._checkForLock(connectionName);
+    await this._addLock(connectionName);
 
-    if (batch === null || typeof (batch) === 'undefined') {
-      batch = await this._getLatestBatch(connectionName)
-      batch = batch - 1
+    if (batch === null || typeof batch === "undefined") {
+      batch = await this._getLatestBatch(connectionName);
+      batch = batch - 1;
     }
 
     const diff = await this._getDiff(
-      _.keys(schemas)
-      , 'down'
-      , batch
-      , connectionName
-      )
+      _.keys(schemas),
+      "down",
+      batch,
+      connectionName
+    );
 
     /**
      * Can't do much since all is good
      */
     if (!_.size(diff)) {
-      await this._cleanup(connectionName)
-      return { migrated: [], status: 'skipped' }
+      await this._cleanup(connectionName);
+      return { migrated: [], status: "skipped" };
     }
 
     /**
      * Getting a list of filtered schemas in the correct order
      */
-    const filteredSchemas = _.transform(diff, (result, name) => {
-      result[name] = schemas[name]
-      return name
-    }, {})
+    const filteredSchemas = _.transform(
+      diff,
+      (result, name) => {
+        result[name] = schemas[name];
+        return name;
+      },
+      {}
+    );
 
     /**
      * If toSQL is set to true, return an array of
@@ -452,12 +515,16 @@ class Migration {
      */
     if (toSQL) {
       try {
-        const queries = await this._getQueries(filteredSchemas, 'down', connectionName)
-        await this._cleanup(connectionName)
-        return { migrated: [], status: 'completed', queries }
+        const queries = await this._getQueries(
+          filteredSchemas,
+          "down",
+          connectionName
+        );
+        await this._cleanup(connectionName);
+        return { migrated: [], status: "completed", queries };
       } catch (error) {
-        await this._cleanup(connectionName)
-        throw error
+        await this._cleanup(connectionName);
+        throw error;
       }
     }
 
@@ -465,12 +532,12 @@ class Migration {
      * Otherwise execute them
      */
     try {
-      await this._execute(filteredSchemas, 'down', batch, connectionName)
-      await this._cleanup(connectionName)
-      return { migrated: diff, status: 'completed' }
+      await this._execute(filteredSchemas, "down", batch, connectionName);
+      await this._cleanup(connectionName);
+      return { migrated: diff, status: "completed" };
     } catch (error) {
-      await this._cleanup(connectionName)
-      throw error
+      await this._cleanup(connectionName);
+      throw error;
     }
   }
 
@@ -484,25 +551,25 @@ class Migration {
    * @return {Object}
    */
   async status(schemas, connectionName) {
-    await this._makeMigrationsTable(connectionName)
+    await this._makeMigrationsTable(connectionName);
 
-    const migrated = await this.db
+    const migrated = await this._getConnection(connectionName)
       .table(this._migrationsTable)
-      .orderBy('name')
+      .orderBy("name");
 
     if (!this.isKeepAliveEnabled) {
-      this.db.close(connectionName)
+      this.db.close(connectionName);
     }
 
     return _.map(schemas, (schema, name) => {
-      const migration = _.find(migrated, (mig) => mig.name === name)
+      const migration = _.find(migrated, (mig) => mig.name === name);
       return {
         name,
         migrated: !!migration,
-        batch: migration ? migration.batch : null
-      }
-    })
+        batch: migration ? migration.batch : null,
+      };
+    });
   }
 }
 
-module.exports = Migration
+module.exports = Migration;

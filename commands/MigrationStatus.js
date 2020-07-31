@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-lucid
@@ -7,9 +7,9 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const BaseMigration = require('./BaseMigration')
+const BaseMigration = require("./BaseMigration");
 
 class MigrationStatus extends BaseMigration {
   /**
@@ -19,11 +19,11 @@ class MigrationStatus extends BaseMigration {
    *
    * @return {String}
    */
-  static get signature () {
+  static get signature() {
     return `
     migration:status
     { -a, --keep-alive: Do not close the database connection }
-    `
+    `;
   }
 
   /**
@@ -33,8 +33,8 @@ class MigrationStatus extends BaseMigration {
    *
    * @return {String}
    */
-  static get description () {
-    return 'Check migrations current status'
+  static get description() {
+    return "Check migrations current status";
   }
 
   /**
@@ -54,16 +54,29 @@ class MigrationStatus extends BaseMigration {
     }
 
     try {
-      const migrations = await this.migration.status(this._getSchemaFiles());
+      // EMM: added connectionName property (undefined by default) to filter out migrations by connection
+      const connectionName = args ? args.connectionName : undefined;
+      const migrations = await this.migration.status(
+        this._getSchemaFiles(connectionName),connectionName
+      );
+      
       if (this.viaAce) {
         const head = ["File name", "Migrated", "Batch"];
-        const body = migrations.map(migration => {
-          return [migration.name, migration.migrated ? "Yes" : "No", migration.batch || ""];
+        const body = migrations.map((migration) => {
+          return [
+            migration.name,
+            migration.migrated ? "Yes" : "No",
+            migration.batch || "",
+          ];
         });
         this.table(head, body);
       } else {
-        return migrations.map(migration => {
-          return { name: migration.name, migrated: migration.migrated ? true : false, batch: migration.batch || null };
+        return migrations.map((migration) => {
+          return {
+            name: migration.name,
+            migrated: migration.migrated ? true : false,
+            batch: migration.batch || null,
+          };
         });
       }
     } catch (error) {
@@ -76,4 +89,4 @@ class MigrationStatus extends BaseMigration {
   }
 }
 
-module.exports = MigrationStatus
+module.exports = MigrationStatus;
