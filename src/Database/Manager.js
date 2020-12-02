@@ -82,20 +82,12 @@ class DatabaseManager {
     /**
      * Account for domain config... remove if blank
      */
+
     if (
       !connectionSettings.connection.domain ||
       connectionSettings.connection.domain === ""
     ) {
       delete connectionSettings.connection.domain;
-    }
-    /**
-     * Account for username to user prop config
-     */
-    if (
-      connectionSettings.connection.username && !connectionSettings.connection.user
-    ) {
-      connectionSettings.connection.user = connectionSettings.connection.username
-      delete connectionSettings.connection.username;
     }
 
     this._connectionPools[name] = new Database(connectionSettings);
