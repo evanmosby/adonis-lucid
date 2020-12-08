@@ -58,12 +58,13 @@ class ValidatorRules {
       /**
        * Extracting values of the args array
        */
-      const [connection, table, fieldName, ignoreKey, ignoreValue] = args
+      const [modelPath, table, fieldName, ignoreKey, ignoreValue] = args
+      const model = use(modelPath)
 
       /**
        * Base query to select where key=value
        */
-      const query = this.Database.connection(connection).table(table).where(fieldName || field, value)
+      const query = this.Database.connection(model.connection).table(model.table).where(fieldName || field, value)
 
       /**
        * If a ignore key and value is defined, then add a whereNot clause
