@@ -14,7 +14,7 @@
  * related to database
  */
 class ValidatorRules {
-  constructor (Database) {
+  constructor(Database) {
     this.Database = Database
   }
 
@@ -42,7 +42,7 @@ class ValidatorRules {
    * email: [rule('unique', ['users', 'user_email', 'id', 1])]
    * ```
    */
-  unique (data, field, message, args, get) {
+  unique(data, field, message, args, get) {
     return new Promise((resolve, reject) => {
       const value = get(data, field)
 
@@ -58,12 +58,12 @@ class ValidatorRules {
       /**
        * Extracting values of the args array
        */
-      const [ table, fieldName, ignoreKey, ignoreValue ] = args
+      const [connection, table, fieldName, ignoreKey, ignoreValue] = args
 
       /**
        * Base query to select where key=value
        */
-      const query = this.Database.table(table).where(fieldName || field, value)
+      const query = this.Database.connection(connection).table(table).where(fieldName || field, value)
 
       /**
        * If a ignore key and value is defined, then add a whereNot clause
