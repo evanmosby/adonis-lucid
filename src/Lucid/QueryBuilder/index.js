@@ -349,7 +349,7 @@ class QueryBuilder {
     }
 
     const Serializer = this.Model.resolveSerializer();
-    return new Serializer(modelInstances);
+    return new Serializer(modelInstances, undefined, undefined, this.Model);
   }
 
   /**
@@ -496,7 +496,7 @@ class QueryBuilder {
      * Return an instance of active model serializer
      */
     const Serializer = this.Model.resolveSerializer();
-    return new Serializer(modelInstances, pages);
+    return new Serializer(modelInstances, pages, undefined, this.Model);
   }
 
   /**

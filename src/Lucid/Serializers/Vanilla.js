@@ -20,7 +20,7 @@ const _ = require('lodash')
  * @constructor
  */
 class VanillaSerializer {
-  constructor (rows, pages = null, isOne = false) {
+  constructor (rows, pages = null, isOne = false, model=null) {
     /**
      * The serializer rows. All rows should be instance
      * of Lucid model
@@ -49,6 +49,15 @@ class VanillaSerializer {
      * @type {Boolean}
      */
     this.isOne = isOne
+
+    /**
+     * A the model class of the rows
+     *
+     * @attribute model
+     *
+     * @type {Object}
+     */
+    this.model = model
   }
 
   /**

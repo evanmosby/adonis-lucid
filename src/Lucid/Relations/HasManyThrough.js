@@ -237,12 +237,12 @@ class HasManyThrough extends BaseRelation {
 
       result.push({
         identity: foreignKeyValue,
-        value: new Serializer([relatedInstance])
+        value: new Serializer([relatedInstance], undefined, undefined, this.RelatedModel)
       })
       return result
     }, [])
 
-    return { key: this.primaryKey, values: transformedValues, defaultValue: new Serializer([]) }
+    return { key: this.primaryKey, values: transformedValues, defaultValue: new Serializer([], undefined, undefined, this.RelatedModel) }
   }
 
   /**
