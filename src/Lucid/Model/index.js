@@ -705,7 +705,7 @@ class Model extends BaseModel {
   _convertDatesToMomentInstances () {
     this.constructor.dates.forEach((field) => {
       if (this.$attributes[field]) {
-        this.$attributes[field] = moment(this.$attributes[field])
+        this.$attributes[field] = moment.utc(this.$attributes[field]).toDate()
       }
     })
   }
@@ -740,7 +740,7 @@ class Model extends BaseModel {
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
       const isMarkedAsDate = _.includes(this.constructor.dates, key)
-      const transformedValue = isMarkedAsDate && value ? moment(value) : value
+      const transformedValue = isMarkedAsDate && value ? moment.utc(value).toDate() : value
 
       /**
        * If key is not a date OR it's a date but model has a predefine getter
@@ -849,6 +849,7 @@ class Model extends BaseModel {
   newUp (row) {
     this.$persisted = true
     this.$attributes = row
+    this._convertDatesToMomentInstances()
     this._syncOriginals()
   }
 
