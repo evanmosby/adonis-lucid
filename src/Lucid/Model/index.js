@@ -627,6 +627,7 @@ class Model extends BaseModel {
      * Keep a clone copy of saved attributes, so that we can find
      * a diff later when calling the update query.
      */
+    this._convertDatesToMomentInstances()
     this._syncOriginals()
 
     /**
@@ -685,6 +686,7 @@ class Model extends BaseModel {
       /**
        * Sync originals to find a diff when updating for next time
        */
+      this._convertDatesToMomentInstances()
       this._syncOriginals()
     }
 
