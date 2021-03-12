@@ -58,7 +58,7 @@ class ValidatorRules {
       /**
        * Extracting values of the args array
        */
-      const [modelPath, table, fieldName, ignoreKey, ignoreValue] = args
+      const [modelPath, fieldName, ignoreKey, ignoreValue] = args
       const model = use(modelPath)
 
       /**
