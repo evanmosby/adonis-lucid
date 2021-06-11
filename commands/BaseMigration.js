@@ -40,7 +40,7 @@ class BaseMigration extends Command {
     });
     if (connectionName) {
       Object.keys(schemaFiles).forEach(file => {
-        if (schemaFiles[file].connection.toLowerCase() !== connectionName.toLowerCase()) {
+        if (schemaFiles[file].connection !== connectionName) {
           delete schemaFiles[file];
         }
       });
