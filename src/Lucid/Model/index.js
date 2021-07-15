@@ -23,6 +23,8 @@ const { HasOne, HasMany, BelongsTo, BelongsToMany, HasManyThrough } = require('.
 const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
 
+const Encryption = use("Encryption");
+
 /**
  * Lucid model is a base model and supposed to be
  * extended by other models.
@@ -594,6 +596,7 @@ class Model extends BaseModel {
      */
     this._setCreatedAt(this.$attributes)
     this._setUpdatedAt(this.$attributes)
+    this._encryptFields()
     this._formatDateFields(this.$attributes)
 
     const query = this.constructor.query()
@@ -627,6 +630,7 @@ class Model extends BaseModel {
      * Keep a clone copy of saved attributes, so that we can find
      * a diff later when calling the update query.
      */
+    this._decryptFields()
     this._convertDatesToMomentInstances()
     this._syncOriginals()
 
@@ -669,6 +673,7 @@ class Model extends BaseModel {
        * Set proper timestamps
       */
       this._setUpdatedAt(this.$attributes)
+      this._encryptFields()
       this._formatDateFields(this.$attributes)
 
       affected = await query
@@ -686,6 +691,7 @@ class Model extends BaseModel {
       /**
        * Sync originals to find a diff when updating for next time
        */
+      this._decryptFields()
       this._convertDatesToMomentInstances()
       this._syncOriginals()
     }
@@ -711,6 +717,41 @@ class Model extends BaseModel {
       }
     })
   }
+
+  /**
+   * Decrypts all encrypted fields
+   *
+   * @method _decryptFields
+   *
+   * @return {void}
+   *
+   * @private
+   */
+    _decryptFields () {
+    this.constructor.encrypted.forEach((path) => {
+      const currentValue = _.get(this.$attributes, path);
+      if (currentValue) _.set(this.$attributes, path, Encryption.decrypt(currentValue));
+      
+      })
+    }
+
+
+  /**
+   * Encrypt all encrypted fields
+   *
+   * @method _encryptFields
+   *
+   * @return {void}
+   *
+   * @private
+   */
+    _encryptFields () {
+      this.constructor.encrypted.forEach((path) => {
+        const currentValue = _.get(this.$attributes, path);
+        if (currentValue) _.set(this.$attributes, path, Encryption.encrypt(currentValue));
+        
+      })
+    }
 
   /**
    * Set attribute on model instance. Setting properties
@@ -845,13 +886,17 @@ class Model extends BaseModel {
    * @method newUp
    *
    * @param  {Object} row
+   * @param  {Boolean} mutate - Override to skip field mutations (typically false for reload)
    *
    * @return {void}
    */
-  newUp (row) {
+  newUp (row, mutate=true) {
     this.$persisted = true
     this.$attributes = row
-    this._convertDatesToMomentInstances()
+    if (mutate) {
+      this._decryptFields()
+      this._convertDatesToMomentInstances()
+    }
     this._syncOriginals()
   }
 
@@ -1305,13 +1350,14 @@ class Model extends BaseModel {
     }
 
     if (!this.isNew) {
+      
       const newInstance = await this.constructor.find(this.primaryKeyValue)
       if (!newInstance) {
         throw GE
           .RuntimeException
           .invoke(`Cannot reload model since row with ${this.constructor.primaryKey} ${this.primaryKeyValue} has been removed`)
       }
-      this.newUp(newInstance.$attributes)
+      this.newUp(newInstance.$attributes, false)
     }
   }
 

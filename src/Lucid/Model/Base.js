@@ -48,6 +48,10 @@ class BaseModel {
     return dates
   }
 
+  static get encrypted () {
+    return []
+  }
+
   /**
    * The attribute name for created at timestamp.
    *
