@@ -598,6 +598,7 @@ class Model extends BaseModel {
     this._setUpdatedAt(this.$attributes)
     this._encryptFields()
     this._formatDateFields(this.$attributes)
+    this._convertJsonToString()
 
     const query = this.constructor.query()
 
@@ -630,6 +631,7 @@ class Model extends BaseModel {
      * Keep a clone copy of saved attributes, so that we can find
      * a diff later when calling the update query.
      */
+    this._convertStringToJson()
     this._decryptFields()
     this._convertDatesToMomentInstances()
     this._syncOriginals()
@@ -675,6 +677,7 @@ class Model extends BaseModel {
       this._setUpdatedAt(this.$attributes)
       this._encryptFields()
       this._formatDateFields(this.$attributes)
+      this._convertJsonToString()
 
       affected = await query
         .where(this.constructor.primaryKey, this.primaryKeyValue)
@@ -691,6 +694,7 @@ class Model extends BaseModel {
       /**
        * Sync originals to find a diff when updating for next time
        */
+      this._convertStringToJson()
       this._decryptFields()
       this._convertDatesToMomentInstances()
       this._syncOriginals()
@@ -717,6 +721,41 @@ class Model extends BaseModel {
       }
     })
   }
+
+  /**
+   * Converts all json fields from strings to JSON
+   *
+   * @method _decryptFields
+   *
+   * @return {void}
+   *
+   * @private
+   */
+   _convertStringToJson(){
+    this.constructor.json.forEach((field) => {
+      if (this.$attributes[field]) {
+        this.$attributes[field] = JSON.parse(this.$attributes[field])
+      }
+    })
+  }
+
+
+  /**
+   * Converts all json fields from JSON to strings
+   *
+   * @method _decryptFields
+   *
+   * @return {void}
+   *
+   * @private
+   */
+    _convertJsonToString(){
+      this.constructor.json.forEach((field) => {
+        if (this.$attributes[field]) {
+          this.$attributes[field] = JSON.stringify(this.$attributes[field])
+        }
+      })
+    }  
 
   /**
    * Decrypts all encrypted fields
@@ -894,6 +933,7 @@ class Model extends BaseModel {
     this.$persisted = true
     this.$attributes = row
     if (mutate) {
+      this._convertStringToJson()
       this._decryptFields()
       this._convertDatesToMomentInstances()
     }

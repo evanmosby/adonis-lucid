@@ -52,6 +52,10 @@ class BaseModel {
     return []
   }
 
+  static get json () {
+    return []
+  }
+
   /**
    * The attribute name for created at timestamp.
    *
