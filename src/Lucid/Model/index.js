@@ -741,7 +741,7 @@ class Model extends BaseModel {
 
 
   /**
-   * Converts all json fields from JSON to strings
+   * Converts all json fields from JSON to strings. Checks to not double stringify!
    *
    * @method _decryptFields
    *
@@ -751,7 +751,7 @@ class Model extends BaseModel {
    */
     _convertJsonToString(){
       this.constructor.json.forEach((field) => {
-        if (this.$attributes[field]) {
+        if (this.$attributes[field] && typeof this.$attributes[field] !== 'string') {
           this.$attributes[field] = JSON.stringify(this.$attributes[field])
         }
       })
