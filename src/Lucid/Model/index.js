@@ -733,7 +733,7 @@ class Model extends BaseModel {
    */
    _convertStringToJson(){
     this.constructor.json.forEach((field) => {
-      if (this.$attributes[field]) {
+      if (this.$attributes[field] && typeof this.$attributes[field] !== 'object') {
         this.$attributes[field] = JSON.parse(this.$attributes[field])
       }
     })
