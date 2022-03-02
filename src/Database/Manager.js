@@ -79,17 +79,6 @@ class DatabaseManager {
       throw CE.RuntimeException.missingDatabaseConnection(name);
     }
 
-    /**
-     * Account for domain config... remove if blank
-     */
-
-    if (
-      !connectionSettings.connection.domain ||
-      connectionSettings.connection.domain === ""
-    ) {
-      delete connectionSettings.connection.domain;
-    }
-
     this._connectionPools[name] = new Database(connectionSettings);
     return this._connectionPools[name];
   }

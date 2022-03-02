@@ -15,7 +15,7 @@
  */
 
 const _ = require('lodash')
-const KnexQueryBuilder = require('knex/lib/query/builder')
+const KnexQueryBuilder = require('knex/lib/query/querybuilder')
 const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
 const util = require('../../lib/util')
 
