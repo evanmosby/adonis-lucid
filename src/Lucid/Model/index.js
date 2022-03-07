@@ -672,7 +672,7 @@ class Model extends BaseModel {
 
     if (this.isDirty) {
       /**
-       * Set proper timestamps
+       * Set proper timestamps and serialze fields as needed
       */
       this._setUpdatedAt(this.$attributes)
       this._encryptFields()
@@ -683,6 +683,10 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
+
+      this._convertStringToJson()
+      this._decryptFields()
+      this._convertDatesToMomentInstances()
     }
 
     /**
@@ -694,9 +698,6 @@ class Model extends BaseModel {
       /**
        * Sync originals to find a diff when updating for next time
        */
-      this._convertStringToJson()
-      this._decryptFields()
-      this._convertDatesToMomentInstances()
       this._syncOriginals()
     }
 
