@@ -41,20 +41,14 @@ class BaseModel {
    *
    * @static
    */
-  static get dates () {
-    const dates = []
-    if (this.createdAtColumn) { dates.push(this.createdAtColumn) }
-    if (this.updatedAtColumn) { dates.push(this.updatedAtColumn) }
-    return dates
-  }
+  static dates = [
+    ...(this.createdAtColumn ? [this.createdAtColumn] : []),
+    ...(this.updatedAtColumn ? [this.updatedAtColumn] : []),
+  ];
 
-  static get encrypted () {
-    return []
-  }
+  static encrypted = [];
 
-  static get json () {
-    return []
-  }
+  static json = [];
 
   /**
    * The attribute name for created at timestamp.
