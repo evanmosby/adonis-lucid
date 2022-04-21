@@ -563,9 +563,28 @@ class QueryBuilder {
    *
    * @return {Promise}
    */
-  delete() {
+  async delete() {
     this._applyScopes();
-    return this.query.delete();
+    if(this.Model.fields){
+      const fields = this.Model.fields.reduce((results, field) => {
+        if (!field.name.includes(".") && !field.computed) {
+          results.push(field.name);
+        }
+        return results;
+      }, []);
+      const rows = await this.query.returning(fields).delete()
+      // * In the case where nothing was deleted, above returns 0
+      if(!(rows instanceof Array)){
+        return rows
+      }
+      const modelInstances = this._mapRowsToInstances(rows);
+      const Serializer = this.Model.resolveSerializer();
+      return new Serializer(modelInstances, undefined, undefined, this.Model);
+    }else{
+      return this.query.delete()
+    }
+    
+    
   }
 
   /**
