@@ -22,8 +22,9 @@ const RelationsParser = require('../Relations/Parser')
  * @constructor
  */
 class EagerLoad {
-  constructor (relations) {
+  constructor (relations, flatten) {
     this._relations = RelationsParser.parseRelations(relations)
+    this._flattenRelations = flatten
   }
 
   /**
@@ -149,24 +150,35 @@ class EagerLoad {
     _.each(relationsKeys, (key, index) => {
       const relationGroups = relatedModelsGroup[index]
       /**
-       * We should loop over actual data set and not the resolved relations.
-       * There are chances when actual relation set will have more rows
-       * than relations, in that case we need to set relations to
-       * `null` or whatever the default value is.
+       * If flatten is true, we bypass setting relationships to parents
+       * and just return an array of mixed Models (parents and children)
        */
-      _.each(modelInstances, (modelInstance) => {
+      if (this._flattenRelations) {
+        _.each(relationGroups.values, (group) => {
+          modelInstances.push(...group.value.rows)
+        })
+      } 
+      else {
         /**
-         * Find the actual value of the relationship for that model instances
+         * We should loop over actual data set and not the resolved relations.
+         * There are chances when actual relation set will have more rows
+         * than relations, in that case we need to set relations to
+         * `null` or whatever the default value is.
          */
-        const value = relationGroups.values.find((group) => {
-          return group.identity === modelInstance[relationGroups.key]
-        }) || { value: relationGroups.defaultValue }
+        _.each(modelInstances, (modelInstance) => {
+          /**
+           * Find the actual value of the relationship for that model instances
+           */
+          const value = relationGroups.values.find((group) => {
+            return group.identity === modelInstance[relationGroups.key]
+          }) || { value: relationGroups.defaultValue }
 
-        /**
-         * Setting relationship on the parent model instance
-         */
-        modelInstance.setRelated(key, value.value)
-      })
+          /**
+           * Setting relationship on the parent model instance
+           */
+          modelInstance.setRelated(key, value.value)
+        })
+      }
     })
   }
 }

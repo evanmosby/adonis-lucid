@@ -146,6 +146,8 @@ class QueryBuilder {
      */
     this.scopesIterator = this.Model.$globalScopes.iterator();
 
+    this._flattenRelations = false;
+
     return new Proxy(this, proxyHandler);
   }
 
@@ -275,7 +277,7 @@ class QueryBuilder {
    */
   async _eagerLoad(modelInstances) {
     if (_.size(modelInstances)) {
-      await new EagerLoad(this._eagerLoads).load(modelInstances);
+      await new EagerLoad(this._eagerLoads, this._flattenRelations).load(modelInstances);
     }
   }
 
@@ -349,7 +351,7 @@ class QueryBuilder {
     }
 
     const Serializer = this.Model.resolveSerializer();
-    return new Serializer(modelInstances, undefined, undefined, this.Model);
+    return new Serializer(modelInstances, undefined, undefined, this.Model, this._flattenRelations);
   }
 
   /**
@@ -664,6 +666,20 @@ class QueryBuilder {
   pick(limit = 1) {
     this.query.orderBy(this.Model.primaryKey, "asc").limit(limit);
     return this.fetch();
+  }
+  
+  /**
+   * Signals Eagerload relationships should be flattened
+   *
+   * @method flatten
+   *
+   * @param  {Boolean}   flatten
+   *
+   * @chainable
+   */
+  flatten(flatten){
+    this._flattenRelations = flatten
+    return this;
   }
 
   /**
