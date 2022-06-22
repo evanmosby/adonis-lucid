@@ -572,7 +572,9 @@ class QueryBuilder {
         }
         return results;
       }, []);
-      const rows = await this.query.returning(fields).delete()
+      // * Sometimes, fields array will be empty. Throwing empty array into returning throws error
+      if(fields.length>0) this.query.returning(fields);
+      const rows = await this.query.delete();
       // * In the case where nothing was deleted, above returns 0
       if(!(rows instanceof Array)){
         return rows
