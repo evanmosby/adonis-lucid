@@ -568,7 +568,7 @@ class Model extends BaseModel {
    * @private
    */
   _syncOriginals () {
-    this.$originalAttributes = _.clone(this.$attributes)
+    this.$originalAttributes = _.cloneDeep(this.$attributes)
   }
 
   /**
