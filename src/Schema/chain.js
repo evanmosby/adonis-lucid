@@ -78,6 +78,22 @@ class SchemaChain {
   }
 
   /**
+   * Create a new view.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createView
+   *
+   * @param  {String}    viewName
+   * @param  {Function}  callback
+   *
+   * @return {void}
+   */
+    createView (viewName, callback) {
+      this._deferredActions.push({ name: 'createViewOrReplace', args: [viewName, callback] })
+    }  
+
+  /**
    * Create a new table if not already exists.
    *
    * NOTE: This action is deferred
@@ -167,6 +183,36 @@ class SchemaChain {
    */
   dropTableIfExists (tableName) {
     this._deferredActions.push({ name: 'dropTableIfExists', args: [tableName] })
+  }
+
+  /**
+   * Drop existing view.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropView
+   *
+   * @param  {String}    viewName
+   *
+   * @return {void}
+   */
+  dropView (viewName) {
+    this._deferredActions.push({ name: 'dropView', args: [viewName] })
+  }
+
+  /**
+   * Drop view only if it exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropViewIfExists
+   *
+   * @param  {String}    viewName
+   *
+   * @return {void}
+   */
+  dropViewIfExists (viewName) {
+    this._deferredActions.push({ name: 'dropViewIfExists', args: [viewName] })
   }
 
   /**
