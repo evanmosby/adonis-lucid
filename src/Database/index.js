@@ -7,26 +7,6 @@
  * file that was distributed with this source code.
 */
 
-// THIS SECTION SELECTIVELY PARSES POSTGRES VALUES TO JS TYPES.
-// PG DRIVER RETURNS STRINGS BY DEFAULT
-// APPARENTLY MUST BE IMPORTED BEFORE KNEX
-try {
-  const { types } = require("pg");
-
-  // data parsing
-  types.setTypeParser(types.builtins.INT8, (value) => {
-    return parseInt(value);
-  });
-
-  types.setTypeParser(types.builtins.FLOAT8, (value) => {
-    return parseFloat(value);
-  });
-
-  types.setTypeParser(types.builtins.NUMERIC, (value) => {
-    return parseFloat(value);
-  });
-} catch (err) {}
-
 const knex = require('knex')
 const _ = require('lodash')
 
