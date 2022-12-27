@@ -170,7 +170,7 @@ class PivotModel extends BaseModel {
 
     const result = await query.insert(this.$attributes)
 
-    this.primaryKeyValue = result[0]
+    this.primaryKeyValue =  this.$primaryKey ? result[0][this.$primaryKey] : result[0]
     this.$persisted = true
     this.$frozen = true
   }

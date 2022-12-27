@@ -622,7 +622,7 @@ class Model extends BaseModel {
      * set to true on model
      */
     if (this.constructor.incrementing) {
-      this.primaryKeyValue = result[0]
+      this.primaryKeyValue = result[0][this.constructor.primaryKey]
     }
 
     this.$persisted = true
