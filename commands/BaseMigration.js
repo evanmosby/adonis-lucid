@@ -34,16 +34,12 @@ class BaseMigration extends Command {
    */
   //EMM: Adjusted to take optional property connectionName and filter out other migrations
   _getSchemaFiles (connectionName) {
-    const schemaFiles = requireAll({
+    let schemaFiles = requireAll({
       dirname: this._migrationsPath,
       filters: /(.*)\.js$/
     });
     if (connectionName) {
-      Object.keys(schemaFiles).forEach(file => {
-        if (schemaFiles[file].connection !== connectionName) {
-          delete schemaFiles[file];
-        }
-      });
+      schemaFiles = schemaFiles[connectionName] ?? [];
     }
     return schemaFiles;
   }
